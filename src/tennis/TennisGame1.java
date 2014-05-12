@@ -1,70 +1,84 @@
 package tennis;
 
+import static java.lang.String.format;
+
 public class TennisGame1 implements TennisGame {
-    private int m_score1 = 0;
-    private int m_score2 = 0;
-    private String player1Name;
-    private String player2Name;
+    private Player player1;
+    private Player player2;
 
     public TennisGame1(String player1Name, String player2Name) {
-        this.player1Name = player1Name;
-        this.player2Name = player2Name;
+        this.player1 = new Player(player1Name);
+        this.player2 = new Player(player2Name);
     }
 
     public void wonPoint(String playerName) {
-        if (playerName == "player1")
-            m_score1 += 1;
-        else
-            m_score2 += 1;
+        if (player1.is(playerName)) player1.scored();
+        else player2.scored();
     }
 
     public String getScore() {
-        String score = "";
-        int tempScore = 0;
-        if (m_score1 == m_score2) {
-            switch (m_score1) {
+        return player1.makeScoreTextWith(player2);
+    }
+
+    private static class Player {
+        private String name;
+        private int score;
+
+        public Player(String name) {
+            this.name = name;
+        }
+
+        public boolean is(String playerName) {
+            return name.equals(playerName);
+        }
+
+        public void scored() {
+            score++;
+        }
+
+        public String makeScoreTextWith(Player other) {
+            if (isTiedTo(other)) return makeTieScore();
+            else if (hasAdvantageOrWinOver(other)) return makeAdvantageOrWinTextWith(other);
+            else if (other.hasAdvantageOrWinOver(this)) return other.makeAdvantageOrWinTextWith(this);
+            else return makeRunningScoreTextWith(other);
+        }
+
+        private boolean isTiedTo(Player other) {
+            return score == other.score;
+        }
+
+        private String makeTieScore() {
+            return score < 3 ? format("%s-All", scoreText()) : "Deuce";
+        }
+
+        private boolean hasAdvantageOrWinOver(Player other) {
+            return score >= 4 && score > other.score;
+        }
+
+        private String makeAdvantageOrWinTextWith(Player other) {
+            if (score - other.score >= 2) return format("Win for %s", name);
+            else return format("Advantage %s", name);
+        }
+
+        private String makeRunningScoreTextWith(Player other) {
+            return format("%s-%s", makeRunningScore(), other.makeRunningScore());
+        }
+
+        private String makeRunningScore() {
+            return score < 3 ? scoreText() : "Forty";
+        }
+
+        private String scoreText() {
+            switch (score) {
                 case 0:
-                    score = "Love-All";
-                    break;
+                    return "Love";
                 case 1:
-                    score = "Fifteen-All";
-                    break;
+                    return "Fifteen";
                 case 2:
-                    score = "Thirty-All";
-                    break;
+                    return "Thirty";
                 default:
-                    score = "Deuce";
-                    break;
-            }
-        } else if (m_score1 >= 4 || m_score2 >= 4) {
-            int minusResult = m_score1 - m_score2;
-            if (minusResult == 1) score = "Advantage player1";
-            else if (minusResult == -1) score = "Advantage player2";
-            else if (minusResult >= 2) score = "Win for player1";
-            else score = "Win for player2";
-        } else {
-            for (int i = 1; i < 3; i++) {
-                if (i == 1) tempScore = m_score1;
-                else {
-                    score += "-";
-                    tempScore = m_score2;
-                }
-                switch (tempScore) {
-                    case 0:
-                        score += "Love";
-                        break;
-                    case 1:
-                        score += "Fifteen";
-                        break;
-                    case 2:
-                        score += "Thirty";
-                        break;
-                    case 3:
-                        score += "Forty";
-                        break;
-                }
+                    return null;
             }
         }
-        return score;
     }
 }
